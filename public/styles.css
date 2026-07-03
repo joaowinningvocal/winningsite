@@ -225,6 +225,56 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 800; line-height: 1.
 .card h3 { font-size: 1.22rem; margin-bottom: 10px; }
 .card p { color: var(--ink-soft); font-size: 0.98rem; }
 
+/* ---------- NightDesk (product showcase) ---------- */
+.nightdesk { background: linear-gradient(180deg, var(--paper-2), var(--paper)); }
+.nightdesk__grid { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 52px; align-items: center; }
+.nd-features { list-style: none; display: grid; gap: 18px; }
+.nd-features li { display: flex; gap: 14px; align-items: flex-start; }
+.nd-features .nd-ic { flex: none; width: 40px; height: 40px; border-radius: 11px; background: linear-gradient(150deg, #ffe3e4, #ffd0d2); color: var(--red-deep); display: grid; place-items: center; }
+.nd-features .nd-ic svg { width: 20px; height: 20px; }
+.nd-features b { color: var(--ink); }
+.nd-features div { color: var(--ink-soft); font-size: 0.98rem; }
+
+/* stylized product preview */
+.nd-app {
+  border-radius: 18px; overflow: hidden; background: #140a13;
+  border: 1px solid rgba(0,0,0,0.15);
+  box-shadow: 0 34px 80px -34px rgba(60,7,10,0.55); transform: rotate(-0.6deg);
+}
+.nd-app__bar { display: flex; align-items: center; gap: 8px; padding: 13px 16px; background: #1d0f18; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.nd-dot { width: 11px; height: 11px; border-radius: 50%; background: rgba(255,255,255,0.22); }
+.nd-dot:nth-child(1) { background: #ec5b53; } .nd-dot:nth-child(2) { background: #e8b23f; } .nd-dot:nth-child(3) { background: #59c26b; }
+.nd-app__title { font-family: var(--font-display); font-weight: 800; color: #fff; font-size: 0.9rem; margin-left: 8px; letter-spacing: 0.01em; }
+.nd-live { margin-left: auto; display: flex; align-items: center; gap: 7px; font-size: 0.72rem; font-weight: 700; color: #8fe0a0; font-family: var(--font-display); }
+.nd-live .pulse-dot { background: #59c26b; }
+.nd-app__body { display: grid; grid-template-columns: 1fr 1.15fr; min-height: 300px; }
+.nd-app__list { padding: 14px; border-right: 1px solid rgba(255,255,255,0.07); display: flex; flex-direction: column; gap: 9px; background: #170c14; }
+.nd-call { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 11px; background: rgba(255,255,255,0.03); }
+.nd-call.active { background: rgba(236,34,41,0.16); box-shadow: inset 0 0 0 1px rgba(236,34,41,0.4); }
+.nd-avatar { flex: none; width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(150deg, var(--red), var(--maroon-3)); color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 0.72rem; display: grid; place-items: center; }
+.nd-call__meta { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.nd-call__meta b { color: #fff; font-size: 0.82rem; }
+.nd-call__meta span { color: rgba(255,255,255,0.5); font-size: 0.72rem; }
+.nd-tag { margin-left: auto; font-size: 0.64rem; font-weight: 700; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.08); padding: 3px 8px; border-radius: 100px; white-space: nowrap; }
+.nd-tag.live { color: #8fe0a0; background: rgba(89,194,107,0.16); }
+.nd-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }
+.nd-stat { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px 12px; }
+.nd-stat b { display: block; color: #fff; font-family: var(--font-display); font-size: 1.15rem; }
+.nd-stat span { color: rgba(255,255,255,0.5); font-size: 0.68rem; }
+.nd-app__detail { padding: 16px; background: #130a12; display: flex; flex-direction: column; gap: 12px; }
+.nd-wave { display: flex; align-items: center; gap: 3px; height: 42px; padding: 0 2px; }
+.nd-wave span { flex: 1; border-radius: 3px; background: linear-gradient(180deg, #ffd2d4, var(--red)); animation: ndWave 1.2s ease-in-out infinite; }
+.nd-wave span:nth-child(odd) { animation-duration: 1.5s; }
+.nd-wave span:nth-child(3n) { animation-duration: 0.9s; }
+@keyframes ndWave { 0%,100% { height: 22%; } 50% { height: 92%; } }
+.nd-transcript { display: flex; flex-direction: column; gap: 9px; }
+.nd-transcript p { font-size: 0.78rem; line-height: 1.4; padding: 8px 11px; border-radius: 10px; max-width: 92%; }
+.nd-transcript b { font-family: var(--font-display); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.7; display: block; margin-bottom: 2px; }
+.nd-transcript .agent { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); align-self: flex-start; }
+.nd-transcript .caller { background: rgba(236,34,41,0.18); color: #fff; align-self: flex-end; }
+.nd-transcript .translated { align-self: flex-end; background: transparent; color: var(--red); font-style: italic; display: flex; align-items: center; gap: 6px; padding: 2px 11px; max-width: 100%; }
+.nd-transcript .translated svg { flex: none; }
+
 /* ---------- How it works ---------- */
 .how { background: linear-gradient(180deg, var(--paper), var(--paper-2)); }
 .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; counter-reset: step; }
@@ -436,8 +486,9 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 800; line-height: 1.
   }
   .nav.open .nav__links a { padding: 12px 0; width: 100%; }
 
-  .hero__grid, .problem__grid, .teamcta__grid, .nl-grid, .contact__grid { grid-template-columns: 1fr; }
+  .hero__grid, .problem__grid, .teamcta__grid, .nl-grid, .contact__grid, .nightdesk__grid { grid-template-columns: 1fr; }
   .hero__media { order: -1; max-width: 460px; }
+  .nightdesk__grid .nd-app { order: -1; }
   .problem__img { min-height: 300px; }
   .problem__body, .teamcta__body { padding: 54px 30px; }
   .teamcta__img { min-height: 300px; }
@@ -450,6 +501,8 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 800; line-height: 1.
 }
 @media (max-width: 560px) {
   .wrap { padding: 0 18px; }
+  .nd-app__body { grid-template-columns: 1fr; }
+  .nd-app__list { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.07); }
   .section { padding: 66px 0; }
   .cards, .pillars, .steps, .ind-grid, .footer__grid, .contact__form .grid2 { grid-template-columns: 1fr; }
   .demo__panel, .contact__info, .contact__form, .modal__box { padding: 26px 22px; }

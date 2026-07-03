@@ -208,7 +208,12 @@
         }),
       });
       details = await res.json();
-      if (!res.ok) throw new Error(details.error || 'Could not start the call.');
+      // Debug aid: shows the exact server/Ravan response in DevTools (F12 → Console).
+      console.log('[WinningVocal] create-call', res.status, details);
+      if (!res.ok) {
+        if (details.raw) console.log('[WinningVocal] raw Ravan response →', details.raw);
+        throw new Error(details.error || 'Could not start the call.');
+      }
     } catch (err) {
       setStatus(err.message || 'Could not start the call. Please try again.', '#ff6b6b');
       refreshStartEnabled();

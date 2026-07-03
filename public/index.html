@@ -22,8 +22,9 @@
     <nav aria-label="Primary">
       <ul class="nav__links">
         <li><a href="#services">Services</a></li>
+        <li><a href="#nightdesk">NightDesk</a></li>
         <li><a href="#demo">Live Demo</a></li>
-        <li><a href="#nightlife">Nightlife</a></li>
+        <li><a href="#nightlife">Nightclubs</a></li>
         <li><a href="#about">About</a></li>
         <li><a href="#contact">Contact</a></li>
       </ul>
@@ -113,9 +114,79 @@
       </article>
       <article class="card">
         <div class="card__icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V9M10 19V4M16 19v-7M22 19H2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <h3>Insights &amp; Recordings</h3>
-        <p>See every conversation. Transcripts, recordings, and analytics on each call and workflow run — so you always know what's working and what to fix.</p>
-      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NIGHTDESK (product) ============ -->
+<section class="section nightdesk" id="nightdesk">
+  <div class="wrap nightdesk__grid">
+    <div class="nightdesk__copy">
+      <span class="eyebrow eyebrow--onlight">Our platform</span>
+      <h2 class="h-lg">Meet NightDesk — every call, in one place.</h2>
+      <p class="lead" style="color:var(--ink-soft);margin:16px 0 26px;">The call desk your team actually watches. Follow conversations as they happen, replay any recording, and read full transcripts — translated automatically — with the analytics to see the whole picture.</p>
+      <ul class="nd-features">
+        <li>
+          <span class="nd-ic"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M4 12a8 8 0 0116 0M7.5 12a4.5 4.5 0 019 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+          <div><b>Live call monitoring.</b> Watch calls come in and follow them in real time across every line.</div>
+        </li>
+        <li>
+          <span class="nd-ic"><svg viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+          <div><b>Recordings on demand.</b> Replay any conversation to catch what was said, missed, or promised.</div>
+        </li>
+        <li>
+          <span class="nd-ic"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 11h10M4 16h13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+          <div><b>Transcripts with auto-translation.</b> Read every call in plain text — automatically translated into your language.</div>
+        </li>
+        <li>
+          <span class="nd-ic"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div><b>Analytics that matter.</b> Volume, answer rate, outcomes, and trends — the numbers behind every conversation.</div>
+        </li>
+      </ul>
+      <a href="#contact" class="btn" style="margin-top:30px;">See NightDesk in action <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    </div>
+
+    <!-- Stylized product preview (illustrative — swap for a real screenshot anytime) -->
+    <div class="nd-app" aria-hidden="true">
+      <div class="nd-app__bar">
+        <span class="nd-dot"></span><span class="nd-dot"></span><span class="nd-dot"></span>
+        <span class="nd-app__title">NightDesk</span>
+        <span class="nd-live"><span class="pulse-dot"></span> 3 live</span>
+      </div>
+      <div class="nd-app__body">
+        <div class="nd-app__list">
+          <div class="nd-call active">
+            <span class="nd-avatar">JR</span>
+            <div class="nd-call__meta"><b>Jordan Rivera</b><span>Dental office · 02:14</span></div>
+            <span class="nd-tag live">● live</span>
+          </div>
+          <div class="nd-call">
+            <span class="nd-avatar">MS</span>
+            <div class="nd-call__meta"><b>Maria Santos</b><span>Booking · 01:02</span></div>
+            <span class="nd-tag">booked</span>
+          </div>
+          <div class="nd-call">
+            <span class="nd-avatar">DK</span>
+            <div class="nd-call__meta"><b>David Kane</b><span>Support · 03:47</span></div>
+            <span class="nd-tag">routed</span>
+          </div>
+          <div class="nd-stats">
+            <div class="nd-stat"><b>128</b><span>calls today</span></div>
+            <div class="nd-stat"><b>94%</b><span>answered</span></div>
+          </div>
+        </div>
+        <div class="nd-app__detail">
+          <div class="nd-wave">
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="nd-transcript">
+            <p class="agent"><b>Agent</b> Thanks for calling — how can I help you today?</p>
+            <p class="caller"><b>Caller</b> Quería agendar una limpieza dental.</p>
+            <p class="translated"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M4 5h9M8 3v2c0 4-2 7-5 8M6 9c0 3 3 5 7 6M13 20l4-9 4 9M14.5 17h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Translated · “I'd like to book a dental cleaning.”</p>
+            <p class="agent"><b>Agent</b> Of course — I have Thursday at 2pm open. Shall I book it?</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -363,7 +434,8 @@
         <ul>
           <li><a href="#services">AI Receptionists</a></li>
           <li><a href="#services">Custom Workflows</a></li>
-          <li><a href="#nightlife">Nightlife &amp; ClubLifter</a></li>
+          <li><a href="#nightdesk">NightDesk</a></li>
+          <li><a href="#nightlife">Nightclubs &amp; ClubLifter</a></li>
           <li><a href="#demo">Live Demo</a></li>
         </ul>
       </div>

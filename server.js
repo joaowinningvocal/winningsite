@@ -95,12 +95,47 @@ app.post('/api/create-call', async (req, res) => {
         .json({ error: 'Could not start the call.', status: r.status, detail: data });
     }
 
-    // Only return what the browser needs to join the LiveKit room.
-    return res.json({
-      access_token: data.access_token,
-      url: data.url,
-      room_id: data.room_id,
-      session_id: data.session_id,
+    // Ravan returned success. Find the LiveKit token + websocket URL wherever
+    // they live in the response (field names/nesting can vary by API version).
+    const norm = (k) => k.toLowerCase().replace(/[^a-z]/g, '');
+    const findByKeys = (obj, keys, test) => {
+      const seen = new Set();
+      const queue = [obj];
+      while (queue.length) {
+        const cur = queue.shift();
+        if (!cur || typeof cur !== 'object' || seen.has(cur)) continue;
+        seen.add(cur);
+        for (const [k, v] of Object.entries(cur)) {
+          if (typeof v === 'string' && v && keys.includes(norm(k)) && (!test || test(v))) return v;
+          if (v && typeof v === 'object') queue.push(v);
+        }
+      }
+      return undefined;
+    };
+
+    const token = findByKeys(data, [
+      'accesstoken', 'token', 'jwt', 'livekittoken', 'participanttoken', 'authtoken',
+    ]);
+    let url =
+      findByKeys(
+        data,
+        ['url', 'wsurl', 'wssurl', 'serverurl', 'livekiturl', 'websocketurl', 'socketurl', 'livekitwsurl'],
+        (v) => /^(wss?|https?):\/\//i.test(v)
+      ) || findByKeys(data, [], (v) => /^wss?:\/\//i.test(v)); // any ws(s):// string
+
+    const roomId = findByKeys(data, ['roomid', 'room', 'roomname']);
+    const sessionId = findByKeys(data, ['sessionid', 'session', 'callid']);
+
+    if (token && url) {
+      return res.json({ access_token: token, url, room_id: roomId, session_id: sessionId });
+    }
+
+    // Success status but we couldn't locate the connection details — return the
+    // raw response so it can be inspected in the browser console and logs.
+    console.error('Ravan 2xx but no token/url found. Raw response:', text);
+    return res.status(502).json({
+      error: 'The call was created but connection details were missing from the response.',
+      raw: data,
     });
   } catch (err) {
     console.error('Ravan create-call error:', err);
