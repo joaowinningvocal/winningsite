@@ -4,7 +4,7 @@
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   const LK = window.LivekitClient || window.LiveKitClient || null;
-  const MAX_TESTS = 2;
+  const MAX_TESTS = 6;
 
   /* ---------- Mobile nav ---------- */
   const nav = $('#nav');
@@ -83,8 +83,8 @@
 
   let room = null;
   let audioCtx = null;
-  let analyser = null;
-  let freqData = null;
+  let agentAnalyser = null, agentData = null;   // agent (remote) voice
+  let micAnalyser = null, micData = null;        // caller (local mic) voice
   let isLive = false;
   let dpr = 1;
   let demoConfigured = true;
@@ -121,7 +121,9 @@
     const bars = 64;
     const gap = 3 * dpr;
     const bw = (w - gap * (bars - 1)) / bars;
-    if (isLive && analyser) analyser.getByteFrequencyData(freqData);
+    const reactive = isLive && (agentAnalyser || micAnalyser);
+    if (isLive && agentAnalyser) agentAnalyser.getByteFrequencyData(agentData);
+    if (isLive && micAnalyser) micAnalyser.getByteFrequencyData(micData);
     const t = performance.now() / 1000;
 
     let grad;
@@ -136,10 +138,13 @@
 
     for (let i = 0; i < bars; i++) {
       let v;
-      if (isLive && analyser) {
-        const idx = Math.floor((i / bars) * (freqData.length * 0.72));
-        v = freqData[idx] / 255;
-        v = Math.pow(v, 0.85);
+      if (reactive) {
+        const len = (agentData || micData).length;
+        const idx = Math.floor((i / bars) * (len * 0.72));
+        // React to whichever side is louder (agent OR caller).
+        const a = agentData ? agentData[idx] : 0;
+        const m = micData ? micData[idx] : 0;
+        v = Math.pow(Math.max(a, m) / 255, 0.85);
       } else {
         v = 0.10 + 0.12 * (0.5 + 0.5 * Math.sin(t * 2.1 + i * 0.34));
       }
@@ -161,7 +166,19 @@
   fullNameEl.addEventListener('input', refreshStartEnabled);
   bizEl.addEventListener('input', refreshStartEnabled);
 
-  /* ----- attach remote audio + build analyser ----- */
+  /* ----- build an analyser from any MediaStreamTrack ----- */
+  function makeAnalyser(mediaStreamTrack) {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const src = audioCtx.createMediaStreamSource(new MediaStream([mediaStreamTrack]));
+    const an = audioCtx.createAnalyser();
+    an.fftSize = 256;
+    an.smoothingTimeConstant = 0.8;
+    src.connect(an); // not connected to destination -> no echo/double audio
+    return an;
+  }
+
+  /* ----- attach remote (agent) audio + build its analyser ----- */
   function handleTrack(track) {
     if (track.kind !== 'audio') return;
     // Play the agent audio
@@ -170,17 +187,35 @@
     el.setAttribute('playsinline', '');
     el.style.display = 'none';
     document.body.appendChild(el);
-    // Tap the same stream for the visualizer
+    // Tap the same stream for the visualizer (agent side)
     try {
-      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      const src = audioCtx.createMediaStreamSource(new MediaStream([track.mediaStreamTrack]));
-      analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.8;
-      freqData = new Uint8Array(analyser.frequencyBinCount);
-      src.connect(analyser); // analyser not connected to destination -> no double audio
+      agentAnalyser = makeAnalyser(track.mediaStreamTrack);
+      agentData = new Uint8Array(agentAnalyser.frequencyBinCount);
     } catch (e) { /* visualizer is best-effort */ }
+  }
+
+  /* ----- tap the local microphone so the caller's voice drives the bars too ----- */
+  function attachMicVisualizer() {
+    try {
+      let micTrack = null;
+      // Preferred: get the published mic track from LiveKit.
+      if (LK.Track && LK.Track.Source) {
+        const pub = room.localParticipant.getTrackPublication(LK.Track.Source.Microphone);
+        if (pub && pub.track && pub.track.mediaStreamTrack) micTrack = pub.track.mediaStreamTrack;
+      }
+      // Fallback: scan the local audio publications.
+      if (!micTrack) {
+        const pubs = room.localParticipant.audioTrackPublications || room.localParticipant.trackPublications;
+        if (pubs && pubs.forEach) pubs.forEach((pub) => {
+          if (!micTrack && pub.track && pub.track.kind === 'audio' && pub.track.mediaStreamTrack)
+            micTrack = pub.track.mediaStreamTrack;
+        });
+      }
+      if (micTrack) {
+        micAnalyser = makeAnalyser(micTrack);
+        micData = new Uint8Array(micAnalyser.frequencyBinCount);
+      }
+    } catch (e) { /* best-effort */ }
   }
 
   /* ----- start / end a call ----- */
@@ -233,6 +268,7 @@
 
       await room.connect(details.url, details.access_token);
       await room.localParticipant.setMicrophoneEnabled(true);
+      attachMicVisualizer(); // caller's voice also drives the waveform
 
       isLive = true;
       demoForm.classList.add('hidden');
@@ -253,7 +289,8 @@
   async function endCall(fromEvent) {
     if (!isLive && !room) return;
     isLive = false;
-    analyser = null;
+    agentAnalyser = null; agentData = null;
+    micAnalyser = null; micData = null;
     try { if (room && !fromEvent) await room.disconnect(); } catch (e) {}
     room = null;
 
