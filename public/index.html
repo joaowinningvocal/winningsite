@@ -114,6 +114,9 @@
       </article>
       <article class="card">
         <div class="card__icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V9M10 19V4M16 19v-7M22 19H2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>Reporting &amp; Analytics</h3>
+        <p>Custom dashboards on top of your agents and workflows — call volume, outcomes, conversions — the numbers that tell you what's working.</p>
+      </article>
     </div>
   </div>
 </section>
@@ -230,6 +233,11 @@
     </div>
 
     <div class="demo__panel">
+      <div class="demo__toggle" id="demoToggle" role="tablist" aria-label="Choose a demo">
+        <button class="demo__toggle-btn active" data-mode="james" role="tab" aria-selected="true">Talk to James</button>
+        <button class="demo__toggle-btn" data-mode="custom" role="tab" aria-selected="false">Build Your Own Agent</button>
+      </div>
+
       <div class="demo__canvas-wrap">
         <div class="demo__status" id="demoStatus"><span class="pulse-dot" style="background:#c9b8ec;"></span> Ready when you are</div>
         <canvas id="demoCanvas" width="1200" height="240" aria-hidden="true"></canvas>
@@ -237,7 +245,7 @@
 
       <!-- Pre-call form -->
       <div id="demoForm">
-        <div class="demo__form">
+        <div class="demo__form" id="demoFormJames">
           <div class="field">
             <label for="dFullName">Your full name</label>
             <input type="text" id="dFullName" autocomplete="name" placeholder="Jordan Rivera" />
@@ -254,6 +262,30 @@
               <option value="High-volume sales team"></option>
               <option value="Service business"></option>
               <option value="Recruiting agency"></option>
+            </datalist>
+          </div>
+        </div>
+        <div class="demo__form hidden" id="demoFormCustom">
+          <div class="field">
+            <label for="cVisitorName">Your name</label>
+            <input type="text" id="cVisitorName" autocomplete="name" placeholder="Jordan Rivera" />
+          </div>
+          <div class="field">
+            <label for="cCompanyName">Your company name</label>
+            <input type="text" id="cCompanyName" placeholder="e.g. Rivera Dental Care" />
+          </div>
+          <div class="field full">
+            <label for="cBusinessDesc">What does your business do?</label>
+            <input type="text" id="cBusinessDesc" placeholder="e.g. Family dental office offering cleanings, checkups, and cosmetic work" />
+          </div>
+          <div class="field full">
+            <label for="cBehavior">Tone / behavior you want</label>
+            <input type="text" id="cBehavior" list="behaviorList" placeholder="e.g. Friendly and casual" />
+            <datalist id="behaviorList">
+              <option value="Friendly and casual"></option>
+              <option value="Professional and formal"></option>
+              <option value="Warm and reassuring"></option>
+              <option value="Energetic and upbeat"></option>
             </datalist>
           </div>
         </div>
@@ -352,6 +384,21 @@
   </div>
 </section>
 
+<!-- ============ CLIENTS ============ -->
+<section class="section clients" id="clients">
+  <div class="wrap">
+    <div class="section__head center">
+      <span class="eyebrow eyebrow--onlight">Our Clients</span>
+      <h2 class="h-lg">Businesses that trust WinningVocal</h2>
+      <p>A growing roster of clients across hospitality, travel, and more — each running a voice agent built and tuned for how they actually operate.</p>
+    </div>
+    <div class="clients__logos">
+      <div class="clients__logo"><img src="/assets/client-clubnewport.png" alt="Club-Newport Vacation &amp; Travel Company" /></div>
+      <div class="clients__logo"><img src="/assets/client-winningranch.png" alt="Winning Ranch" /></div>
+    </div>
+  </div>
+</section>
+
 <!-- ============ INDUSTRIES ============ -->
 <section class="section industries">
   <div class="wrap">
@@ -394,7 +441,7 @@
         </div>
         <div class="contact__item">
           <span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="10" r="2.5" stroke="#fff" stroke-width="1.8"/></svg></span>
-          <div><div class="k">Based in</div><div class="v">Las Vegas, Nevada — serving clients everywhere</div></div>
+          <div><div class="k">Based in</div><div class="v">Las Vegas, with offices in Los Angeles</div></div>
         </div>
         <div class="contact__item">
           <span class="ic"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>

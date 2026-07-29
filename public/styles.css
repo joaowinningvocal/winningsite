@@ -320,6 +320,10 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 800; line-height: 1.
   color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 8px;
 }
 .demo__form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.demo__toggle { display: inline-flex; gap: 6px; padding: 5px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; margin-bottom: 22px; }
+.demo__toggle-btn { border: none; background: transparent; color: rgba(255,255,255,0.72); font-family: var(--font-display); font-weight: 700; font-size: 0.88rem; letter-spacing: 0.01em; padding: 9px 18px; border-radius: 999px; cursor: pointer; transition: background 0.2s ease, color 0.2s ease; }
+.demo__toggle-btn:hover { color: #fff; }
+.demo__toggle-btn.active { background: var(--red); color: #fff; }
 .field { display: flex; flex-direction: column; gap: 7px; }
 .field.full { grid-column: 1 / -1; }
 .field label { font-size: 0.82rem; font-weight: 700; color: rgba(255,255,255,0.82); font-family: var(--font-display); letter-spacing: 0.03em; }
@@ -407,6 +411,11 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 800; line-height: 1.
 
 /* ---------- About ---------- */
 .about { background: var(--paper); }
+.clients { background: var(--paper-2); }
+.clients__logos { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 56px; margin-top: 8px; }
+.clients__logo { display: flex; align-items: center; justify-content: center; }
+.clients__logo img { max-height: 84px; max-width: 220px; width: auto; height: auto; object-fit: contain; filter: grayscale(1); opacity: 0.75; transition: filter 0.25s ease, opacity 0.25s ease; }
+.clients__logo img:hover { filter: grayscale(0); opacity: 1; }
 .pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 8px; }
 .pillar { padding: 30px 26px; border-radius: var(--radius-sm); background: #fff; border: 1px solid var(--line); }
 .pillar__k { font-family: var(--font-serif); font-style: italic; font-size: 1.05rem; color: var(--red-deep); margin-bottom: 12px; }

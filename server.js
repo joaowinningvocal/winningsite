@@ -22,7 +22,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 const RAVAN_API_URL =
   process.env.RAVAN_API_URL || 'https://api.ravan.ai/api/v1/calling/create-call';
 const RAVAN_API_KEY = process.env.RAVAN_API_KEY || '';   // secret — env only
-const RAVAN_AGENT_ID = process.env.RAVAN_AGENT_ID || ''; // the demo agent id
+const RAVAN_AGENT_ID = process.env.RAVAN_AGENT_ID || ''; // James — the fixed demo agent
+const RAVAN_AGENT_ID_CUSTOM = process.env.RAVAN_AGENT_ID_CUSTOM || ''; // "Build Your Own Agent" demo
 const MAKE_WEBHOOK_URL =
   process.env.MAKE_WEBHOOK_URL ||
   'https://hook.us1.make.com/2duhuouszq919zesc4arpcfaarp2br9g';
@@ -30,7 +31,10 @@ const MAKE_WEBHOOK_URL =
 // Lets the front-end show a friendly "demo not configured yet" message
 // without ever exposing the key.
 app.get('/api/config', (_req, res) => {
-  res.json({ demoConfigured: Boolean(RAVAN_API_KEY && RAVAN_AGENT_ID) });
+  res.json({
+    demoConfigured: Boolean(RAVAN_API_KEY && RAVAN_AGENT_ID),
+    customDemoConfigured: Boolean(RAVAN_API_KEY && RAVAN_AGENT_ID_CUSTOM),
+  });
 });
 
 function cleanStr(v, max = 200) {
@@ -39,31 +43,68 @@ function cleanStr(v, max = 200) {
 
 // ---- Create a browser (web) call with the Ravan agent ----------------------
 app.post('/api/create-call', async (req, res) => {
-  if (!RAVAN_API_KEY || !RAVAN_AGENT_ID) {
-    return res.status(503).json({
-      error:
-        'The live demo isn’t configured on the server yet. Set RAVAN_API_KEY and RAVAN_AGENT_ID.',
-    });
-  }
+  const mode = req.body?.mode === 'custom' ? 'custom' : 'james';
 
-  const fullName = cleanStr(req.body?.full_name);
-  const businessType = cleanStr(req.body?.business_type);
-  if (!fullName || !businessType) {
-    return res
-      .status(400)
-      .json({ error: 'full_name and business_type are required.' });
-  }
+  let agentId, payload;
 
-  // Payload for a browser-based call. Per the Ravan docs, `type: "web_call"`
-  // returns a LiveKit access_token + url instead of dialling a phone number,
-  // so the phone fields aren't used here. The values the agent needs are
-  // injected through prompt_dynamic_variables (full_name, business_type).
-  const payload = {
-    type: 'web_call',
-    agent_id: RAVAN_AGENT_ID,
-    metadata: { source: 'winningvocal-website', full_name: fullName, business_type: businessType },
-    prompt_dynamic_variables: { full_name: fullName, business_type: businessType },
-  };
+  if (mode === 'custom') {
+    if (!RAVAN_API_KEY || !RAVAN_AGENT_ID_CUSTOM) {
+      return res.status(503).json({
+        error:
+          'The "Build Your Own Agent" demo isn’t configured on the server yet. Set RAVAN_AGENT_ID_CUSTOM.',
+      });
+    }
+    const visitorName = cleanStr(req.body?.visitor_name);
+    const companyName = cleanStr(req.body?.company_name);
+    const businessDescription = cleanStr(req.body?.business_description, 500);
+    const behavior = cleanStr(req.body?.behavior, 200);
+    if (!visitorName || !companyName || !businessDescription) {
+      return res.status(400).json({
+        error: 'visitor_name, company_name and business_description are required.',
+      });
+    }
+    agentId = RAVAN_AGENT_ID_CUSTOM;
+    payload = {
+      type: 'web_call',
+      agent_id: agentId,
+      metadata: {
+        source: 'winningvocal-website-custom-demo',
+        visitor_name: visitorName,
+        company_name: companyName,
+      },
+      prompt_dynamic_variables: {
+        visitor_name: visitorName,
+        company_name: companyName,
+        business_description: businessDescription,
+        behavior: behavior || 'Professional, warm, and confident',
+      },
+    };
+  } else {
+    if (!RAVAN_API_KEY || !RAVAN_AGENT_ID) {
+      return res.status(503).json({
+        error:
+          'The live demo isn’t configured on the server yet. Set RAVAN_API_KEY and RAVAN_AGENT_ID.',
+      });
+    }
+    const fullName = cleanStr(req.body?.full_name);
+    const businessType = cleanStr(req.body?.business_type);
+    if (!fullName || !businessType) {
+      return res
+        .status(400)
+        .json({ error: 'full_name and business_type are required.' });
+    }
+    agentId = RAVAN_AGENT_ID;
+    // Payload for a browser-based call. Per the Ravan docs, `type: "web_call"`
+    // returns a LiveKit access_token + url instead of dialling a phone number,
+    // so the phone fields aren't used here. The values the agent needs are
+    // injected through prompt_dynamic_variables (full_name, business_type).
+    payload = {
+      type: 'web_call',
+      agent_id: agentId,
+      metadata: { source: 'winningvocal-website', full_name: fullName, business_type: businessType },
+      prompt_dynamic_variables: { full_name: fullName, business_type: businessType },
+    };
+  }
 
   try {
     const r = await fetch(RAVAN_API_URL, {

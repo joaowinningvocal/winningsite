@@ -75,6 +75,13 @@
   const fullNameEl = $('#dFullName');
   const bizEl = $('#dBusiness');
   const demoForm = $('#demoForm');
+  const demoFormJames = $('#demoFormJames');
+  const demoFormCustom = $('#demoFormCustom');
+  const demoToggle = $('#demoToggle');
+  const visitorNameEl = $('#cVisitorName');
+  const companyNameEl = $('#cCompanyName');
+  const businessDescEl = $('#cBusinessDesc');
+  const behaviorEl = $('#cBehavior');
   const demoLive = $('#demoLive');
   const countEl = $('#demoCount');
   const countLiveEl = $('#demoCountLive');
@@ -88,6 +95,8 @@
   let isLive = false;
   let dpr = 1;
   let demoConfigured = true;
+  let customDemoConfigured = true;
+  let demoMode = 'james'; // 'james' | 'custom'
 
   const getCount = () => parseInt(sessionStorage.getItem('wv_demo_calls') || '0', 10);
   const setCount = (n) => sessionStorage.setItem('wv_demo_calls', String(n));
@@ -158,13 +167,42 @@
   window.addEventListener('resize', sizeCanvas);
   requestAnimationFrame(draw);
 
-  /* ----- enable Start only when both fields filled ----- */
+  /* ----- enable Start only when the active mode's fields are filled ----- */
   function refreshStartEnabled() {
     if (getCount() >= MAX_TESTS) { startBtn.disabled = false; return; } // stays clickable to open modal
-    startBtn.disabled = !(fullNameEl.value.trim() && bizEl.value.trim());
+    if (demoMode === 'custom') {
+      startBtn.disabled = !(
+        visitorNameEl.value.trim() &&
+        companyNameEl.value.trim() &&
+        businessDescEl.value.trim()
+      );
+    } else {
+      startBtn.disabled = !(fullNameEl.value.trim() && bizEl.value.trim());
+    }
   }
   fullNameEl.addEventListener('input', refreshStartEnabled);
   bizEl.addEventListener('input', refreshStartEnabled);
+  visitorNameEl.addEventListener('input', refreshStartEnabled);
+  companyNameEl.addEventListener('input', refreshStartEnabled);
+  businessDescEl.addEventListener('input', refreshStartEnabled);
+  behaviorEl.addEventListener('input', refreshStartEnabled);
+
+  /* ----- toggle between the two demo modes ----- */
+  function setDemoMode(mode) {
+    if (mode === 'custom' && !customDemoConfigured) return; // disabled tab, ignore
+    demoMode = mode;
+    $$('.demo__toggle-btn', demoToggle).forEach((btn) => {
+      const active = btn.dataset.mode === mode;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-selected', String(active));
+    });
+    demoFormJames.classList.toggle('hidden', mode !== 'james');
+    demoFormCustom.classList.toggle('hidden', mode !== 'custom');
+    refreshStartEnabled();
+  }
+  $$('.demo__toggle-btn', demoToggle).forEach((btn) => {
+    btn.addEventListener('click', () => setDemoMode(btn.dataset.mode));
+  });
 
   /* ----- build an analyser from any MediaStreamTrack ----- */
   function makeAnalyser(mediaStreamTrack) {
@@ -221,7 +259,7 @@
   /* ----- start / end a call ----- */
   async function startCall() {
     if (getCount() >= MAX_TESTS) { openHumanModal(); return; }
-    if (!demoConfigured) {
+    if (demoMode === 'custom' ? !customDemoConfigured : !demoConfigured) {
       setStatus('Demo not configured yet — please use the contact form below.', '#ffb84d');
       return;
     }
@@ -234,13 +272,23 @@
 
     let details;
     try {
+      const body = demoMode === 'custom'
+        ? {
+            mode: 'custom',
+            visitor_name: visitorNameEl.value.trim(),
+            company_name: companyNameEl.value.trim(),
+            business_description: businessDescEl.value.trim(),
+            behavior: behaviorEl.value.trim(),
+          }
+        : {
+            mode: 'james',
+            full_name: fullNameEl.value.trim(),
+            business_type: bizEl.value.trim(),
+          };
       const res = await fetch('/api/create-call', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          full_name: fullNameEl.value.trim(),
-          business_type: bizEl.value.trim(),
-        }),
+        body: JSON.stringify(body),
       });
       details = await res.json();
       // Debug aid: shows the exact server/Ravan response in DevTools (F12 → Console).
@@ -337,8 +385,12 @@
   /* ---------- Webhook submit helper ---------- */
   async function submitContact(payload, btn, msgEl) {
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email || '');
-    if (!payload.name || !emailOk) {
-      msgEl.textContent = 'Please enter your name and a valid email.';
+    // Phone is optional — only validated if the visitor entered something.
+    const phoneOk = !payload.phone || /^[+()\d\s.-]{7,20}$/.test(payload.phone);
+    if (!payload.name || !emailOk || !phoneOk) {
+      msgEl.textContent = !phoneOk
+        ? 'Please enter a valid phone number, or leave it blank.'
+        : 'Please enter your name and a valid email.';
       msgEl.className = 'form-msg err';
       return;
     }
@@ -406,7 +458,17 @@
     .then((r) => r.json())
     .then((c) => {
       demoConfigured = Boolean(c.demoConfigured);
+      customDemoConfigured = Boolean(c.customDemoConfigured);
       if (!demoConfigured) setStatus('Live demo coming online soon', '#c9b8ec');
+      if (!customDemoConfigured) {
+        const customBtn = demoToggle.querySelector('[data-mode="custom"]');
+        if (customBtn) {
+          customBtn.disabled = true;
+          customBtn.title = 'Coming soon';
+          customBtn.style.opacity = '0.45';
+          customBtn.style.cursor = 'not-allowed';
+        }
+      }
     })
     .catch(() => {});
 
