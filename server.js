@@ -18,6 +18,15 @@ const app = express();
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Clean URLs for the legal pages required by Twilio A2P 10DLC / TCR review.
+// Server-rendered static HTML, no client-side JS involved.
+app.get('/privacy', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
+});
+app.get('/terms', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'terms.html'));
+});
+
 // ---- Configuration (set these in Railway → Variables) ----------------------
 const RAVAN_API_URL =
   process.env.RAVAN_API_URL || 'https://api.ravan.ai/api/v1/calling/create-call';

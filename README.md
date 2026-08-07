@@ -2,7 +2,7 @@
 
 Marketing site for WinningVocal with:
 
-- A **live AI voice demo** — visitors talk to your Ravan (Agni) agent right in the browser (WebRTC via LiveKit). After **2 test calls**, a pop-up invites them to speak to a human.
+- A **live AI voice demo** — visitors talk to your Ravan (Agni) agent right in the browser (WebRTC via LiveKit). After **6 test calls**, a pop-up invites them to speak to a human.
 - A **contact form** and the **"talk to a human"** pop-up, both forwarded to your **Make.com** webhook.
 - A dedicated dark **Nightlife** section featuring **ClubLifter** and a rotating client-logo wall.
 
@@ -57,5 +57,5 @@ Nixpacks/`railway.json` are already configured, so no extra build settings are n
 
 - **Security:** the Ravan key is only read from an environment variable and is never sent to the browser. The browser only receives the short-lived LiveKit token needed to join a single call.
 - **`web_call` phone fields:** Ravan's docs list `from_phone_number`/`to_phone_number` as required, but they aren't used for browser calls, so the server omits them. If Ravan ever rejects the request, the exact error is logged and returned — send empty strings for those fields in `server.js` if needed.
-- **Test limit:** the "2 tests then talk-to-a-human" gate is tracked per browser session (`sessionStorage`). It's a soft nudge, not hard security.
+- **Test limit:** the "6 tests then talk-to-a-human" gate is tracked per browser session (`sessionStorage`). It's a soft nudge, not hard security.
 - **Assets:** logos and images live in `public/assets/`.
