@@ -16,6 +16,7 @@ const express = require('express');
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' })); // for the plain-HTML SMS consent form
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Clean URLs for the legal pages required by Twilio A2P 10DLC / TCR review.
@@ -25,6 +26,9 @@ app.get('/privacy', (_req, res) => {
 });
 app.get('/terms', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'terms.html'));
+});
+app.get('/sms-consent', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'sms-consent.html'));
 });
 
 // ---- Configuration (set these in Railway → Variables) ----------------------
@@ -224,6 +228,77 @@ app.post('/api/contact', async (req, res) => {
     console.error('Make webhook error:', err);
     return res.status(502).json({ error: 'Could not submit your request. Please try again.' });
   }
+});
+
+// ---- SMS Consent Form submission (plain HTML form POST, no JS) -------------
+app.post('/api/sms-consent', async (req, res) => {
+  const body = {
+    type: 'sms_consent',
+    full_name: cleanStr(req.body?.full_name),
+    company_name: cleanStr(req.body?.company_name),
+    mobile_phone: cleanStr(req.body?.mobile_phone, 40),
+    relationship: cleanStr(req.body?.relationship, 60),
+    sms_consent: req.body?.sms_consent === 'yes',
+    signature: cleanStr(req.body?.signature),
+    sign_date: cleanStr(req.body?.sign_date, 20),
+    submitted_at: new Date().toISOString(),
+  };
+
+  if (!body.full_name || !body.company_name || !body.mobile_phone || !body.relationship || !body.signature || !body.sign_date) {
+    return res.status(400).send(
+      'Missing required fields. Please go back and fill in every field (the SMS notifications checkbox is the only optional one).'
+    );
+  }
+
+  try {
+    const r = await fetch(MAKE_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!r.ok) console.error('Make webhook (sms-consent) failed:', r.status, await r.text());
+  } catch (err) {
+    console.error('Make webhook (sms-consent) error:', err);
+    // Don't block the user on a webhook hiccup — the form itself is the
+    // compliance record; still show the confirmation below.
+  }
+
+  // Plain server-rendered confirmation — this is a normal (non-AJAX) form
+  // submission, so the browser navigates here directly. No JS involved.
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Thank you — WinningVocal</title>
+<link rel="icon" href="/assets/logo-black.png" />
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<header class="legal__header">
+  <div class="wrap legal__header-inner">
+    <a href="/" class="legal__logo"><img src="/assets/logo-black.png" alt="WinningVocal" /></a>
+    <a href="/" class="legal__back">&larr; Back to site</a>
+  </div>
+</header>
+<main class="legal">
+  <div class="wrap legal__thanks">
+    <h1>Thank you, ${body.sms_consent ? 'your preference has been recorded' : 'your form has been submitted'}.</h1>
+    <p>${body.sms_consent
+      ? 'You will receive SMS account and service notifications at the number provided. Reply STOP at any time to opt out, or HELP for help.'
+      : 'You have not opted in to SMS notifications. This does not affect your service, pricing, support, or job duties.'}</p>
+    <p><a href="/sms-consent">&larr; Back to the SMS Consent Form</a> &nbsp;|&nbsp; <a href="/">Return to winningvocal.com</a></p>
+  </div>
+</main>
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__bar"><span>&copy; 2026 WinningVocal. All rights reserved.</span></div>
+    <div class="footer__legal">Winning Vocal is a registered DBA of World Services and Sales LLC.</div>
+  </div>
+</footer>
+</body>
+</html>`);
 });
 
 const PORT = process.env.PORT || 3000;
