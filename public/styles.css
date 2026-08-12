@@ -327,6 +327,7 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 800; line-height: 1.
 .field { display: flex; flex-direction: column; gap: 7px; }
 .field.full { grid-column: 1 / -1; }
 .field label { font-size: 0.82rem; font-weight: 700; color: rgba(255,255,255,0.82); font-family: var(--font-display); letter-spacing: 0.03em; }
+.field__optional { font-weight: 500; text-transform: none; letter-spacing: 0; color: rgba(255,255,255,0.5); }
 .field input, .field select, .field textarea {
   font-family: var(--font-body); font-size: 1rem; padding: 13px 15px;
   border-radius: 12px; border: 1px solid rgba(255,255,255,0.18);

@@ -74,9 +74,10 @@
   const endBtn = $('#endCallBtn');
   const fullNameEl = $('#dFullName');
   const bizEl = $('#dBusiness');
+  const websiteEl = $('#dWebsite');
   const demoForm = $('#demoForm');
+  const demoFormIris = $('#demoFormIris');
   const demoFormJames = $('#demoFormJames');
-  const demoFormCustom = $('#demoFormCustom');
   const demoToggle = $('#demoToggle');
   const visitorNameEl = $('#cVisitorName');
   const companyNameEl = $('#cCompanyName');
@@ -96,7 +97,7 @@
   let dpr = 1;
   let demoConfigured = true;
   let customDemoConfigured = true;
-  let demoMode = 'james'; // 'james' | 'custom'
+  let demoMode = 'iris'; // 'iris' | 'james'
 
   const getCount = () => parseInt(sessionStorage.getItem('wv_demo_calls') || '0', 10);
   const setCount = (n) => sessionStorage.setItem('wv_demo_calls', String(n));
@@ -170,7 +171,7 @@
   /* ----- enable Start only when the active mode's fields are filled ----- */
   function refreshStartEnabled() {
     if (getCount() >= MAX_TESTS) { startBtn.disabled = false; return; } // stays clickable to open modal
-    if (demoMode === 'custom') {
+    if (demoMode === 'james') {
       startBtn.disabled = !(
         visitorNameEl.value.trim() &&
         companyNameEl.value.trim() &&
@@ -187,17 +188,17 @@
   businessDescEl.addEventListener('input', refreshStartEnabled);
   behaviorEl.addEventListener('input', refreshStartEnabled);
 
-  /* ----- toggle between the two demo modes ----- */
+  /* ----- toggle between Iris and James ----- */
   function setDemoMode(mode) {
-    if (mode === 'custom' && !customDemoConfigured) return; // disabled tab, ignore
+    if (mode === 'james' && !customDemoConfigured) return; // disabled tab, ignore
     demoMode = mode;
     $$('.demo__toggle-btn', demoToggle).forEach((btn) => {
       const active = btn.dataset.mode === mode;
       btn.classList.toggle('active', active);
       btn.setAttribute('aria-selected', String(active));
     });
+    demoFormIris.classList.toggle('hidden', mode !== 'iris');
     demoFormJames.classList.toggle('hidden', mode !== 'james');
-    demoFormCustom.classList.toggle('hidden', mode !== 'custom');
     refreshStartEnabled();
   }
   $$('.demo__toggle-btn', demoToggle).forEach((btn) => {
@@ -259,7 +260,7 @@
   /* ----- start / end a call ----- */
   async function startCall() {
     if (getCount() >= MAX_TESTS) { openHumanModal(); return; }
-    if (demoMode === 'custom' ? !customDemoConfigured : !demoConfigured) {
+    if (demoMode === 'james' ? !customDemoConfigured : !demoConfigured) {
       setStatus('Demo not configured yet — please use the contact form below.', '#ffb84d');
       return;
     }
@@ -272,18 +273,19 @@
 
     let details;
     try {
-      const body = demoMode === 'custom'
+      const body = demoMode === 'james'
         ? {
-            mode: 'custom',
+            mode: 'james',
             visitor_name: visitorNameEl.value.trim(),
             company_name: companyNameEl.value.trim(),
             business_description: businessDescEl.value.trim(),
             behavior: behaviorEl.value.trim(),
           }
         : {
-            mode: 'james',
+            mode: 'iris',
             full_name: fullNameEl.value.trim(),
             business_type: bizEl.value.trim(),
+            website: websiteEl.value.trim(),
           };
       const res = await fetch('/api/create-call', {
         method: 'POST',
@@ -461,7 +463,7 @@
       customDemoConfigured = Boolean(c.customDemoConfigured);
       if (!demoConfigured) setStatus('Live demo coming online soon', '#c9b8ec');
       if (!customDemoConfigured) {
-        const customBtn = demoToggle.querySelector('[data-mode="custom"]');
+        const customBtn = demoToggle.querySelector('[data-mode="james"]');
         if (customBtn) {
           customBtn.disabled = true;
           customBtn.title = 'Coming soon';

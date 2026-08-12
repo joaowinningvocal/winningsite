@@ -35,8 +35,9 @@ app.get('/sms-consent', (_req, res) => {
 const RAVAN_API_URL =
   process.env.RAVAN_API_URL || 'https://api.ravan.ai/api/v1/calling/create-call';
 const RAVAN_API_KEY = process.env.RAVAN_API_KEY || '';   // secret — env only
-const RAVAN_AGENT_ID = process.env.RAVAN_AGENT_ID || ''; // James — the fixed demo agent
-const RAVAN_AGENT_ID_CUSTOM = process.env.RAVAN_AGENT_ID_CUSTOM || ''; // "Build Your Own Agent" demo
+const RAVAN_AGENT_ID = process.env.RAVAN_AGENT_ID || ''; // Iris — the always-on demo agent
+const RAVAN_AGENT_ID_CUSTOM = process.env.RAVAN_AGENT_ID_CUSTOM || ''; // James — "Build Your Own Agent"
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || ''; // powers Iris's optional website lookup
 const MAKE_WEBHOOK_URL =
   process.env.MAKE_WEBHOOK_URL ||
   'https://hook.us1.make.com/2duhuouszq919zesc4arpcfaarp2br9g';
@@ -54,13 +55,103 @@ function cleanStr(v, max = 200) {
   return typeof v === 'string' ? v.trim().slice(0, max) : '';
 }
 
+// Very small HTML → text stripper. Good enough for typical server-rendered
+// small-business marketing sites; not meant to handle heavy JS-only SPAs.
+function htmlToText(html) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// ---- Optional: look up a caller's business from their website -------------
+// Fetches the site, asks Claude to pull out the essentials, and returns them
+// so James can open the call already knowing who he's talking to. Designed to
+// fail silently and quickly — this is enrichment, never a hard dependency for
+// starting the call.
+async function lookupBusinessFromWebsite(rawUrl) {
+  const empty = { company_name: '', main_products_services: '' };
+  if (!rawUrl || !ANTHROPIC_API_KEY) return empty;
+
+  let url = rawUrl.trim();
+  if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+  try {
+    new URL(url); // throws on garbage input
+  } catch {
+    return empty;
+  }
+
+  let pageText = '';
+  try {
+    const siteRes = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WinningVocalBot/1.0)' },
+      signal: AbortSignal.timeout(6000),
+      redirect: 'follow',
+    });
+    const html = await siteRes.text();
+    pageText = htmlToText(html).slice(0, 6000);
+  } catch (err) {
+    console.error('Website lookup fetch failed:', url, err.message);
+    return empty;
+  }
+  if (pageText.length < 40) return empty; // too little to work with (likely JS-only site)
+
+  try {
+    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 300,
+        messages: [
+          {
+            role: 'user',
+            content:
+              'You are extracting business information from raw website text for a phone call script. ' +
+              'Respond with ONLY a JSON object, no markdown, no explanation, with exactly these keys: ' +
+              '"company_name" (the business name, empty string if unclear), ' +
+              '"main_products_services" (a short, spoken-friendly phrase describing what they offer, ' +
+              'max ~15 words, empty string if unclear). ' +
+              `Website text:\n\n${pageText}`,
+          },
+        ],
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!claudeRes.ok) {
+      console.error('Website lookup Claude call failed:', claudeRes.status, await claudeRes.text());
+      return empty;
+    }
+    const data = await claudeRes.json();
+    const raw = (data?.content || []).map((b) => b.text || '').join('').trim();
+    const jsonMatch = raw.match(/\{[\s\S]*\}/); // strip stray ```json fences if Claude adds them
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+    return {
+      company_name: cleanStr(parsed.company_name, 120),
+      main_products_services: cleanStr(parsed.main_products_services, 200),
+    };
+  } catch (err) {
+    console.error('Website lookup Claude call error:', err.message);
+    return empty;
+  }
+}
+
 // ---- Create a browser (web) call with the Ravan agent ----------------------
 app.post('/api/create-call', async (req, res) => {
-  const mode = req.body?.mode === 'custom' ? 'custom' : 'james';
+  const mode = req.body?.mode === 'james' ? 'james' : 'iris';
 
-  let agentId, payload;
+  let payload;
 
-  if (mode === 'custom') {
+  if (mode === 'james') {
     if (!RAVAN_API_KEY || !RAVAN_AGENT_ID_CUSTOM) {
       return res.status(503).json({
         error:
@@ -76,12 +167,11 @@ app.post('/api/create-call', async (req, res) => {
         error: 'visitor_name, company_name and business_description are required.',
       });
     }
-    agentId = RAVAN_AGENT_ID_CUSTOM;
     payload = {
       type: 'web_call',
-      agent_id: agentId,
+      agent_id: RAVAN_AGENT_ID_CUSTOM,
       metadata: {
-        source: 'winningvocal-website-custom-demo',
+        source: 'winningvocal-website-build-your-own',
         visitor_name: visitorName,
         company_name: companyName,
       },
@@ -101,21 +191,33 @@ app.post('/api/create-call', async (req, res) => {
     }
     const fullName = cleanStr(req.body?.full_name);
     const businessType = cleanStr(req.body?.business_type);
+    const website = cleanStr(req.body?.website, 300);
     if (!fullName || !businessType) {
       return res
         .status(400)
         .json({ error: 'full_name and business_type are required.' });
     }
-    agentId = RAVAN_AGENT_ID;
+
+    // Enrichment only — never blocks or fails the call if the site is
+    // unreachable, empty, or ANTHROPIC_API_KEY isn't set.
+    const { company_name, main_products_services } = await lookupBusinessFromWebsite(website);
+
     // Payload for a browser-based call. Per the Ravan docs, `type: "web_call"`
     // returns a LiveKit access_token + url instead of dialling a phone number,
     // so the phone fields aren't used here. The values the agent needs are
-    // injected through prompt_dynamic_variables (full_name, business_type).
+    // injected through prompt_dynamic_variables (full_name, business_type,
+    // plus company_name / main_products_services when the website lookup found
+    // something — Iris's prompt checks for these and adapts accordingly).
     payload = {
       type: 'web_call',
-      agent_id: agentId,
+      agent_id: RAVAN_AGENT_ID,
       metadata: { source: 'winningvocal-website', full_name: fullName, business_type: businessType },
-      prompt_dynamic_variables: { full_name: fullName, business_type: businessType },
+      prompt_dynamic_variables: {
+        full_name: fullName,
+        business_type: businessType,
+        company_name,
+        main_products_services,
+      },
     };
   }
 

@@ -234,8 +234,8 @@
 
     <div class="demo__panel">
       <div class="demo__toggle" id="demoToggle" role="tablist" aria-label="Choose a demo">
-        <button class="demo__toggle-btn active" data-mode="james" role="tab" aria-selected="true">Talk to James</button>
-        <button class="demo__toggle-btn" data-mode="custom" role="tab" aria-selected="false">Build Your Own Agent</button>
+        <button class="demo__toggle-btn active" data-mode="iris" role="tab" aria-selected="true">Talk to Iris</button>
+        <button class="demo__toggle-btn" data-mode="james" role="tab" aria-selected="false">Build Your Own Agent</button>
       </div>
 
       <div class="demo__canvas-wrap">
@@ -245,7 +245,7 @@
 
       <!-- Pre-call form -->
       <div id="demoForm">
-        <div class="demo__form" id="demoFormJames">
+        <div class="demo__form" id="demoFormIris">
           <div class="field">
             <label for="dFullName">Your full name</label>
             <input type="text" id="dFullName" autocomplete="name" placeholder="Jordan Rivera" />
@@ -264,8 +264,12 @@
               <option value="Recruiting agency"></option>
             </datalist>
           </div>
+          <div class="field full">
+            <label for="dWebsite">Your company website <span class="field__optional">(optional — helps Iris know your business before you even speak)</span></label>
+            <input type="url" id="dWebsite" autocomplete="url" placeholder="https://yourbusiness.com" />
+          </div>
         </div>
-        <div class="demo__form hidden" id="demoFormCustom">
+        <div class="demo__form hidden" id="demoFormJames">
           <div class="field">
             <label for="cVisitorName">Your name</label>
             <input type="text" id="cVisitorName" autocomplete="name" placeholder="Jordan Rivera" />
