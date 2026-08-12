@@ -76,7 +76,12 @@ function htmlToText(html) {
 // starting the call.
 async function lookupBusinessFromWebsite(rawUrl) {
   const empty = { company_name: '', main_products_services: '' };
-  if (!rawUrl || !ANTHROPIC_API_KEY) return empty;
+  if (!rawUrl || !ANTHROPIC_API_KEY) {
+    if (rawUrl && !ANTHROPIC_API_KEY) {
+      console.log('Website lookup skipped: ANTHROPIC_API_KEY is not set.');
+    }
+    return empty;
+  }
 
   let url = rawUrl.trim();
   if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
@@ -135,10 +140,12 @@ async function lookupBusinessFromWebsite(rawUrl) {
     const raw = (data?.content || []).map((b) => b.text || '').join('').trim();
     const jsonMatch = raw.match(/\{[\s\S]*\}/); // strip stray ```json fences if Claude adds them
     const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
-    return {
+    const result = {
       company_name: cleanStr(parsed.company_name, 120),
       main_products_services: cleanStr(parsed.main_products_services, 200),
     };
+    console.log('Website lookup succeeded:', url, result);
+    return result;
   } catch (err) {
     console.error('Website lookup Claude call error:', err.message);
     return empty;
@@ -201,13 +208,21 @@ app.post('/api/create-call', async (req, res) => {
     // Enrichment only — never blocks or fails the call if the site is
     // unreachable, empty, or ANTHROPIC_API_KEY isn't set.
     const { company_name, main_products_services } = await lookupBusinessFromWebsite(website);
+    // A dedicated flag, separate from company_name/main_products_services.
+    // Ravan substitutes {{...}} everywhere in the prompt, including inside
+    // conditional instructions — so checking "if {{company_name}} is empty"
+    // directly breaks once substitution runs (the check text itself gets
+    // blanked out along with it). This flag is only ever "yes" or "no", so
+    // it's safe to branch on.
+    const hasWebsiteInfo = company_name || main_products_services ? 'yes' : 'no';
 
     // Payload for a browser-based call. Per the Ravan docs, `type: "web_call"`
     // returns a LiveKit access_token + url instead of dialling a phone number,
     // so the phone fields aren't used here. The values the agent needs are
     // injected through prompt_dynamic_variables (full_name, business_type,
-    // plus company_name / main_products_services when the website lookup found
-    // something — Iris's prompt checks for these and adapts accordingly).
+    // plus company_name / main_products_services / has_website_info when the
+    // website lookup found something — Iris's prompt checks has_website_info
+    // and adapts accordingly).
     payload = {
       type: 'web_call',
       agent_id: RAVAN_AGENT_ID,
@@ -217,6 +232,7 @@ app.post('/api/create-call', async (req, res) => {
         business_type: businessType,
         company_name,
         main_products_services,
+        has_website_info: hasWebsiteInfo,
       },
     };
   }
